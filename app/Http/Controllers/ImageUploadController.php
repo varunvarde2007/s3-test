@@ -17,7 +17,7 @@ class ImageUploadController extends Controller
     {
 
         if (!$request->has(["url", "name"])) {
-            return \response()->json(["status" => false, "message" => "Invalid Parameters"]);
+            return \response()->json(["status" => false, "message" => "Invalid Parameters"], 400);
         }
         $data = $request->all(["url", "name"]);
         $contents = Http::get($data["url"])->body();
@@ -32,7 +32,7 @@ class ImageUploadController extends Controller
             $image->save();
             return response()->json(["status" => true, "message" => "Image Uploaded Successfully"]);
         } else {
-            return response()->json(["status" => true, "message" => "There was an issue uploading the file. Please try again"], 400);
+            return response()->json(["status" => false, "message" => "There was an issue uploading the file. Please try again"], 400);
         }
     }
 
