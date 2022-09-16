@@ -1,6 +1,122 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Cloudformation template for S3 bucket
 Resources:
+    VPC:
+      Type: AWS::EC2::VPC
+      Properties:
+        CidrBlock: 10.0.0.0/16
+        EnableDnsSupport: true
+        EnableDnsHostnames: true
+        InstanceTenancy: default
+        Tags:
+          - Key: Name
+            Value: FriendSurance VPC
+    InternetGateway:
+      Type: AWS::EC2::InternetGateway
+    VPCGatewayAttachment:
+      Type: AWS::EC2::VPCGatewayAttachment
+      Properties:
+        VpcId: !Ref VPC
+        InternetGatewayId: !Ref InternetGateway
+    SubnetA:
+      Type: AWS::EC2::Subnet
+      Properties:
+        AvailabilityZone: ap-south-1a
+        VpcId: !Ref VPC
+        CidrBlock: 10.0.0.0/24
+        MapPublicIpOnLaunch: true
+    RouteTable:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId: !Ref VPC
+    InternetRoute:
+      Type: AWS::EC2::Route
+      DependsOn: InternetGateway
+      Properties:
+        DestinationCidrBlock: 0.0.0.0/0
+        GatewayId: !Ref InternetGateway
+        RouteTableId: !Ref RouteTable
+    SubnetARouteTableAssociation:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        RouteTableId: !Ref RouteTable
+        SubnetId: !Ref SubnetA
+    InstanceSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupName: "FriendSurance SG"
+        GroupDescription: "FriendSurance Instance SG"
+        VpcId: !Ref VPC
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: '80'
+            ToPort: '80'
+            CidrIp:  0.0.0.0/0
+          - IpProtocol: tcp
+            FromPort: '443'
+            ToPort: '443'
+            CidrIp:  0.0.0.0/0
+          - IpProtocol: tcp
+            FromPort: '22'
+            ToPort: '22'
+            CidrIp:  0.0.0.0/0
+        SecurityGroupEgress:
+          - IpProtocol: -1
+            CidrIp: 0.0.0.0/0
+    ElasticIP:
+      Type: AWS::EC2::EIP
+      Properties:
+        Domain: vpc
+        InstanceId: !Ref EC2Instance
+   KeyPair:
+     Type: AWS::EC2::KeyPair
+     Properties:
+       KeyName: "FriendSurance"
+       KeyType: "ed25519"
+    EC2Instance:
+      Type: 'AWS::EC2::Instance'
+      Properties:
+        ImageId: ami-006d3995d3a6b963b
+        InstanceType:
+          Ref: InstanceTypeParameter
+        KeyName: !Ref KeyPair
+        SubnetId: !Ref SubnetA
+        SecurityGroupIds:
+          - Ref: InstanceSecurityGroup
+        UserData:
+            Fn::Base64: !Sub |
+             #!/bin/bash -xe
+             sudo apt-get update -y
+             add-apt-repository ppa:ondrej/php
+             apt install php8.1 php8.1-dev -y
+             apt -y install php8.1 php8.1-common php8.1-fpm php8.1-mysql php8.1-bcmath php8.1-xml php8.1-xmlrpc php8.1-curl php8.1-gd php8.1-imagick php8.1-cli php8.1-dev php8.1-imap php8.1-mbstring php8.1-opcache php8.1-soap php8.1-zip php8.1-intl
+             apt install nginx -y
+             service apache2 stop
+             systemctl disable apache2
+             service nginx start
+             apt install mariadb mariadb-server -y
+             cd /var/www/
+             git clone https://github.com/varunvarde2007/s3-test.git
+             chown www-data:www-data /var/www/s3-test/ -R
+             cd /etc/nginx/sites-available
+             cp /var/www/s3-test/laravel.conf .
+             ln -s  /etc/nginx/sites-available/laravel.conf /etc/nginx/sites-enabled/
+             cd /etc/nginx/sites-enabled
+             unlink default
+             nginx -t
+             wget -O /usr/bin/composer https://getcomposer.org/download/2.4.2/composer.phar
+             chmod +x /usr/bin/composer
+             cd /var/www/s3-test
+             composer install
+             chown www-data:www-data /var/www/s3-test/ -R
+             mysql -e "CREATE DATABASE friendsurance"
+             mysql -e "CREATE 'user'@'localhost' identified by 'G00gle@143'"
+             cp .env.staging .env
+             php artisan key:generate
+        BlockDeviceMappings:
+          - DeviceName: /dev/sda1
+            Ebs:
+              VolumeSize: 20
   S3Bucket:
       Type: AWS::S3::Bucket
       Description: Creating Amazon S3 bucket from CloudFormation
@@ -12,6 +128,8 @@ Resources:
            BlockPublicPolicy: true
            IgnorePublicAcls: true
            RestrictPublicBuckets: true
+
+
 Outputs:
   S3Bucket:
     Description: Bucket Created using this template.
