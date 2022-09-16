@@ -68,17 +68,16 @@ Resources:
       Properties:
         Domain: vpc
         InstanceId: !Ref EC2Instance
-   KeyPair:
-     Type: AWS::EC2::KeyPair
-     Properties:
-       KeyName: "FriendSurance"
-       KeyType: "ed25519"
+    KeyPair:
+      Type: AWS::EC2::KeyPair
+      Properties:
+        KeyName: "FriendSurance"
+        KeyType: "ed25519"
     EC2Instance:
       Type: 'AWS::EC2::Instance'
       Properties:
         ImageId: ami-006d3995d3a6b963b
-        InstanceType:
-          Ref: InstanceTypeParameter
+        InstanceType: "t2.medium"
         KeyName: !Ref KeyPair
         SubnetId: !Ref SubnetA
         SecurityGroupIds:
@@ -117,7 +116,7 @@ Resources:
           - DeviceName: /dev/sda1
             Ebs:
               VolumeSize: 20
-  S3Bucket:
+    S3Bucket:
       Type: AWS::S3::Bucket
       Description: Creating Amazon S3 bucket from CloudFormation
       Properties:
