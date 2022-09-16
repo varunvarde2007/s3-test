@@ -128,8 +128,6 @@ Resources:
            BlockPublicPolicy: true
            IgnorePublicAcls: true
            RestrictPublicBuckets: true
-
-
 Outputs:
   S3Bucket:
     Description: Bucket Created using this template.
