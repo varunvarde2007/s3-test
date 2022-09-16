@@ -93,7 +93,7 @@ Resources:
              sudo service apache2 stop
              sudo systemctl disable apache2
              sudo service nginx start
-             sudo apt install mariadb mariadb-server -y
+             sudo apt install mariadb-server -y
              cd /var/www/
              git clone https://github.com/varunvarde2007/s3-test.git
              sudo chown www-data:www-data /var/www/s3-test/ -R
@@ -109,7 +109,8 @@ Resources:
              composer install
              chown www-data:www-data /var/www/s3-test/ -R
              sudo mysql -e "CREATE DATABASE friendsurance"
-             sudo mysql -e "CREATE 'user'@'localhost' identified by 'G00gle@143'"
+             sudo mysql -e "CREATE 'ubuntu'@'localhost' identified by ''"
+             sudo mysql -e "GRANT ALL PRIVILEGES on friendsurance.* to 'ubuntu'@'localhost'"
              cp .env.staging .env
              php artisan key:generate
         BlockDeviceMappings:
