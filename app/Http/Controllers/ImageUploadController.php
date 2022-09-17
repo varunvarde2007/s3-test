@@ -24,6 +24,7 @@ class ImageUploadController extends Controller
         $extension = pathinfo($data["url"], PATHINFO_EXTENSION);
         $fileName = Str::random(32) . ".$extension";
         $status = Storage::disk("s3")->put("images/$fileName", $contents);
+
         if ($status) {
             $image = new Image();
             $image->name = $data["name"];
@@ -32,7 +33,7 @@ class ImageUploadController extends Controller
             $image->save();
             return response()->json(["status" => true, "message" => "Image Uploaded Successfully"]);
         } else {
-            return response()->json(["status" => false, "message" => "There was an issue uploading the file. Please try again"], 400);
+            return response()->json(["status" => false, "message" => "There was an issue uploading the file. Please try again", "error" => $status], 400);
         }
     }
 

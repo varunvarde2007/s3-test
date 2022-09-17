@@ -73,6 +73,35 @@ Resources:
       Properties:
         KeyName: "FriendSurance"
         KeyType: "ed25519"
+    EC2IamRole:
+      Type: 'AWS::IAM::Role'
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - ec2.amazonaws.com
+              Action:
+                - 'sts:AssumeRole'
+        Path: /
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/AmazonS3FullAccess
+#        Policies:
+#          - PolicyName: root
+#            PolicyDocument:
+#              Version: "2012-10-17"
+#              Statement:
+#                - Effect: Allow
+#                  Action: 's3:*'
+#                  Resource: '*'
+    Ec2InstanceProfile:
+      Type: AWS::IAM::InstanceProfile
+      Properties:
+        Path: /
+        Roles:
+          - !Ref EC2IamRole
     EC2Instance:
       Type: 'AWS::EC2::Instance'
       Properties:
@@ -80,6 +109,7 @@ Resources:
         InstanceType: "t2.medium"
         KeyName: !Ref KeyPair
         SubnetId: !Ref SubnetA
+        IamInstanceProfile: !Ref Ec2InstanceProfile
         SecurityGroupIds:
           - Ref: InstanceSecurityGroup
         UserData:
@@ -106,10 +136,11 @@ Resources:
              sudo wget -O /usr/bin/composer https://getcomposer.org/download/2.4.2/composer.phar
              sudo chmod +x /usr/bin/composer
              cd /var/www/s3-test
-             composer install
+             sudo composer install
+             export COMPOSER_ALLOW_SUPERUSER=1
              chown www-data:www-data /var/www/s3-test/ -R
              sudo mysql -e "CREATE DATABASE friendsurance"
-             sudo mysql -e "CREATE 'ubuntu'@'localhost' identified by ''"
+             sudo mysql -e "CREATE user 'ubuntu'@'localhost' identified by ''"
              sudo mysql -e "GRANT ALL PRIVILEGES on friendsurance.* to 'ubuntu'@'localhost'"
              cp .env.staging .env
              php artisan key:generate
