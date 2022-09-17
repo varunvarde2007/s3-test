@@ -144,6 +144,7 @@ Resources:
              sudo mysql -e "GRANT ALL PRIVILEGES on friendsurance.* to 'ubuntu'@'localhost'"
              cp .env.staging .env
              php artisan key:generate
+             sudo service nginx restart
         BlockDeviceMappings:
           - DeviceName: /dev/sda1
             Ebs:
